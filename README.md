@@ -1,7 +1,7 @@
 # SubFore
 Offical implementation of paper [Subvolume-based Foreground Masking for Medical Masked Image Modeling]()
 
-![alt text](assets/framework3.png "Framework")
+![alt text](assets/framework.pdf "Framework")
 
 ## Contributions
 We focus on improving the pre-text task by exploring two-step
@@ -30,7 +30,7 @@ masking strategy:
 | Flare22              | CT           | 13 organs                 | 100       | 31         |
 | Amos22               | CT & MRI     | 15 abdominal organs       | 32        | 9          |
 | MM-WHS               | CT           | 14                        | 6         | -          |
-| BraTs                | MRI          | 3 tumors                  | 387       | 97         |
+| MSD BraTs            | MRI          | 3 tumors                  | 387       | 97         |
 
 
 ### Configurations
@@ -44,7 +44,6 @@ masking strategy:
 | Norm [bmin, bmax]      | [0.1, 1.0]         |
 | ROI Size               | 96×96×96           |
 | Subvolume size         | 16×16×16           |
-| Augmentation           | No |
 
 - Pre-training
   
