@@ -1,21 +1,20 @@
-import argparse
 import os
-from time import time
-import logging
-import numpy as np
+import torch
+from tqdm import tqdm
+from copy import deepcopy
 import torch.nn.utils as torch_utils
 import torch
-import torch.distributed as dist
-import torch.optim as optim
-from monai.networks.nets import SwinUNETR
-from torch.nn.parallel import DistributedDataParallel
 from lr_scheduler import  WarmupCosineSchedule
 import torch.optim 
-from timm.utils import ModelEmaV2
+import argparse
 from tqdm import tqdm
-from lr_scheduler import WarmupCosineSchedule
-from copy import deepcopy
+from timm import scheduler
+from timm.utils import ModelEmaV2
+from torch.amp import GradScaler, autocast
 from models.swin import Swin
+from datasets import train_loader,val_loader
+from lr_scheduler import WarmupCosineSchedule
+
 roi = 96
 itera= 399
 parser = argparse.ArgumentParser(description="PyTorch Training")
@@ -51,114 +50,98 @@ parser.add_argument("--decay", default=5e-2, type=float, help="decay rate")
 parser.add_argument("--momentum", default=0.9, type=float, help="momentum")
 parser.add_argument("--lrdecay", default=True, help="enable learning rate decay")
 parser.add_argument("--max_grad_norm", default=1.0, type=float, help="maximum gradient norm")
-
+parser.add_argument("--luna_path", default='./luna', type=str, help="LUNA 16 dataset path")
+parser.add_argument("--btcv_path", default='./btcv', type=str, help="BTCV dataset path")
+parser.add_argument("--covid_path", default='./covid19', type=str, help="TCIA Covid 19 dataset path")
 args = parser.parse_args()
 
 
-    
-
-def validation(epoch_iterator_val):
+def validation(epoch_iterator_val, model):
     model.eval()
     with torch.no_grad():
         for batch in epoch_iterator_val:
-            val_orgin = (batch["image"].cuda())
-            with torch.amp.autocast('cuda'):
-                loss = model(val_orgin)
+            val_origin = batch["image"].cuda()
+            with autocast(device_type='cuda'):
+                loss = model(val_origin)
             if loss.dim() != 0:
                 loss = loss.mean()
-                #loss = loss_function(val_outputs, val_inputs,idx)
     return loss
 
-def train(global_step, train_loader, loss_val_best, global_step_best,model_ema):
+
+def train(global_step, train_loader, loss_val_best, global_step_best, model_ema, model, optimizer, scheduler, scaler, max_iterations, eval_num, val_loader, args):
     model.train()
     epoch_loss = 0
-    step = 0
-
-    epoch_iterator = tqdm(train_loader, desc="Training (X / X Steps) (loss=X.X)", dynamic_ncols=True)
+    
+    epoch_iterator = tqdm(train_loader, desc="Training", dynamic_ncols=True)
     for step, batch in enumerate(epoch_iterator):
-        step += 1
         x = batch["image"].cuda()
-        
-        with torch.amp.autocast('cuda'):
-            #x_mask,idx = masking(x)
+
+        with autocast(device_type='cuda'):
             loss = model(x)
-        
-            #loss = loss_function(logit_map, x,idx)
+
         if loss.dim() != 0:
             loss = loss.mean()
+
         scaler.scale(loss).backward()
-        torch_utils.clip_grad_norm_(model.parameters(),1e5) 
-        epoch_loss += loss.item()
-        scaler.unscale_(optimizer)
+        torch_utils.clip_grad_norm_(model.parameters(), 1e5)
+
         scaler.step(optimizer)
         scaler.update()
-    
-        torch.cuda.synchronize() 
-        model_ema.update(model)
         optimizer.zero_grad()
         scheduler.step(global_step)
-        epoch_iterator.set_description(  # noqa: B038
+
+        epoch_loss += loss.item()
+        epoch_iterator.set_description(
             f"Training ({global_step} / {max_iterations} Steps) (loss={loss:2.5f})"
         )
 
+        model_ema.update(model)
+        torch.cuda.synchronize()
+
         if (global_step % eval_num == 0 and global_step != 0) or global_step == max_iterations:
-            epoch_iterator_val = tqdm(val_loader, desc="Validate (X / X Steps) (dice=X.X)", dynamic_ncols=True)
-            loss_val = validation(epoch_iterator_val)
-            epoch_loss /= step
-            epoch_loss_values.append(epoch_loss)
+            epoch_iterator_val = tqdm(val_loader, desc="Validate", dynamic_ncols=True)
+            loss_val = validation(epoch_iterator_val, model)
+
+            epoch_loss /= (step + 1)
 
             if loss_val.item() < loss_val_best:
-                loss_val_best= loss_val
+                loss_val_best = loss_val.item()
                 global_step_best = global_step
-                file_name = "11.25_" + str(global_step) + "_16_60_swin_pretrain_weight.pt"
-                file_name2 = "11.25._" + str(global_step) + "_16_60_density_bestmodel.pt"
-                torch.save(deepcopy(model.state_dict()), os.path.join(r'/home/work/.medsam/dataset/cvpr/save_weights',file_name))
-                torch.save(model, os.path.join(r'/home/work/.medsam/dataset/cvpr/save_weights',file_name2))
-                print(
-                    "Model Was Saved ! Current Best Loss: {} Current Loss: {}".format(loss_val_best, loss_val)
-                )
 
+                file_name = f"{global_step}_16_60_swin_pretrain_weight.pt"
+                file_path = os.path.join(args.save_path, file_name)
+
+                torch.save(deepcopy(model.state_dict()), file_path)
+
+                print(f"Model Was Saved! Current Best Loss: {loss_val_best:.4f}, Current Loss: {loss_val.item():.4f}")
             else:
-                print(
-                    "Model Was Not Saved ! Current Best Loss. Dice: {} Current Avg. Loss: {}".format(
-                        loss_val_best,loss_val))
+                print(f"Model Was Not Saved! Current Best Loss: {loss_val_best:.4f}, Current Avg. Loss: {loss_val.item():.4f}")
+
         global_step += 1
 
     return global_step, loss_val_best, global_step_best
 
 
-from monai.networks.nets.swin_unetr import SwinTransformer as SwinViT
-from monai.utils import ensure_tuple_rep
-import torch
-import torch.nn.functional as F
 if __name__ == "__main__":
-    # try:
-    
     torch.backends.cudnn.benchmark = True
 
-    #torch.multiprocessing.set_start_method('spawn')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = Swin(args).to(device)
-
-    #model = torch.nn.DataParallel(model, device_ids=[0,1,2,3,4,5,6,7])
-
-    torch.backends.cudnn.benchmark = True
-    
-    from timm import optim, scheduler
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.decay)
-    #scheduler = scheduler.StepLRScheduler(optimizer, decay_t=460*100, decay_rate=1.0, warmup_t=500, warmup_lr_init=0, t_in_epochs=True )
-    #scheduler = scheduler.CosineLRScheduler(optimizer, t_initial=args.warmup_steps)
     scheduler = WarmupCosineSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=args.num_steps)
-    scaler = torch.amp.GradScaler()
-    model_ema= ModelEmaV2(model,device=device)
+    scaler = GradScaler()
+    model_ema = ModelEmaV2(model, device=device)
+
     max_iterations = args.num_steps
     global_step = 0
     global_step_best = 0
-    eval_num=args.eval_num
-    epoch_loss_values = []
-    metric_values = []
-    #loss_val_best = 10000
-    loss_val_best = torch.tensor(float('inf')).to(device)
+    eval_num = args.eval_num
+    loss_val_best = float('inf')
+
     while global_step < max_iterations:
-        global_step, loss_val_best, global_step_best = train(global_step, train_loader, loss_val_best, global_step_best,model_ema)
+        global_step, loss_val_best, global_step_best = train(
+            global_step, train_loader, loss_val_best, global_step_best,
+            model_ema, model, optimizer, scheduler, scaler,
+            max_iterations, eval_num, val_loader, args
+        )

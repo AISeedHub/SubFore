@@ -141,11 +141,11 @@ class Swin(nn.Module):
 
         self.recon_loss = Reconstruction_loss()
 
-    def masking(self, x_asd, masking_ratio, block_size):
+    def masking(self, x, masking_ratio, block_size):
         """
         Applies masking to the input tensor with Gaussian noise.
         """
-        batch_ct_array = x_asd.clone()
+        batch_ct_array = x.clone()
         num_samples, c, z, y, x = batch_ct_array.shape
 
         pad_z = (block_size - (z % block_size)) % block_size
@@ -181,7 +181,7 @@ class Swin(nn.Module):
 
     def forward(self, x_in):
         mask_x, mask_x_index = self.masking(
-            x_asd=x_in, masking_ratio=args.mask_ratio, block_size=args.subvolume_size
+            x=x_in, masking_ratio=args.mask_ratio, block_size=args.subvolume_size
         )
 
         hidden_states_out = self.swinViT(mask_x)
