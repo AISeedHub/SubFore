@@ -14,7 +14,7 @@ masking strategy:
 ## Main Results
 ![alt text](assets/segmentation.png "Segmentation")
 
-
+# BTCV Segmentation Result
 | Methods         | Spleen  | Rkid   | Lkid   | Gall   | Eso    | Liv    | Sto    | Aor    | IVC    | Veins  | Pan    | Rag    | Lag    | **AVG** |
 |-----------------|---------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|
 | UNETR backbone | 
