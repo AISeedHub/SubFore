@@ -74,7 +74,8 @@ masking strategy:
 | - Ours         | 91.00%  | 90.39%  | 94.16%      | 87.59%   | 90.28%  | 96.37%   | 84.90%   | **90.67%** |
 
 
-# Amos22 & MSD BraTs(Task1)
+### Amos22 & MSD BraTs(Task1)
+
 | Methods         | **Amos22 (Avg)** | BraTS (TC) | BraTS (WT) | BraTS (ET) | **Overall Avg** |
 |-----------------|------------------|------------|------------|------------|-----------------|
 | UNETR          |                  |            |            |            |                 |
