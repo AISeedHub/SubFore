@@ -156,7 +156,7 @@ if __name__ == "__main__":
     val_ds = CacheDataset(data=val_list, transform=val_transforms, cache_num=len(val_list), cache_rate=1.0, num_workers=0)
     val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=1)
 
-    model = torch.load('/home/work/.medsam/dataset/cvpr/ft/btcv_ft/12.16._11.25_558600_16_60_swin_pretrain_weight.pt_finetuning_model.pt')
+    model = torch.load()
     model.eval()
 
     with torch.no_grad():
