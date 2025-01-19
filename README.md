@@ -1,4 +1,4 @@
-# SubFore
+# SubFore: Subvolume Foreground Masking for Medical Image Modeling
 Offical implementation of paper [Subvolume-based Foreground Masking for Medical Masked Image Modeling]()
 
 ![alt text](assets/framework.jpg "Framework")
