@@ -153,10 +153,10 @@ masking strategy:
 | ROI Size               | 96×96×96           |
 
 
-## Model Weight
-| **Weight**          | **Values**         |
-|---------------------|--------------------|
-| SSL Pretrained      |  commming soon     |
+## Model Weight(SwinUNETR)
+| **Name**                | **Weight**         |
+|-------------------------|--------------------|
+| SSL Pretrained Weight   |  commming soon     |
 
 
 ## Installation
