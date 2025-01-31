@@ -118,8 +118,8 @@ masking strategy:
 
 - Pre-processing
 
-| **Parameter**          | **Values**          |
-|-------------------------|---------------------|
+| **Parameter**          | **Values**         |
+|------------------------|--------------------|
 | Spacing                | [1.5, 1.5, 1.5]    |
 | Norm [amin, amax]      | [-175.0, 250.0]    |
 | Norm [bmin, bmax]      | [0.1, 1.0]         |
@@ -128,25 +128,24 @@ masking strategy:
 
 - Pre-training
   
-| **Parameter**          | **Values**          |
-|-------------------------|---------------------|
+| **Parameter**          | **Values**         |
+|------------------------|--------------------|
 | Pre-training Steps     | 1600               |
 | Optimizer              | AdamW              |
-| Optimization LR        | 1e-4               |
+| Optimization LR        | 8e-4(UNETR: 1e-4)  |
 | LR Schedule            | Warmup cosine      |
-| Warmup Steps           | 100                |
-| Momentum               | 0.9                |
-| Regularization Weight  | 1e-2               |
+| Warmup Epochs          | 20                 |
+| Regularization Weight  | 5e-2               |
 | Batch Size             | 4                  |
 
 - Downstream
   
-| **Parameter**          | **Values**          |
-|-------------------------|---------------------|
+| **Parameter**          | **Values**         |
+|------------------------|--------------------|
 | Optimizer              | AdamW              |
-| Optimization LR        | 3e-4               |
+| Optimization LR        | 1e-3(UNETR: 3e-4)  |
 | LR Schedule            | Warmup cosine      |
-| Warmup Steps           | 100                |
+| Warmup Epochs          | 20                 |
 | Momentum               | 0.9                |
 | Regularization Weight  | 1e-5               |
 | Batch Size             | 2                  |
@@ -154,27 +153,16 @@ masking strategy:
 | ROI Size               | 96×96×96           |
 
 
-## Reproducibility
+## Model Weight
+| **Weight**          | **Values**         |
+|---------------------|--------------------|
+| SSL Pretrained      |  commming soon     |
 
-- Installation
 
-```bash
-git clone 
-cd SubFore
-pip install -r requirements.txt
-```
+## Installation
+Comming Soon
 
-- Run pretraining
 
-```bash
-python train.py --config configs/pretrain.yaml
-```
-
-- Run downstream task
-
-```bash
-python train.py --config configs/downstream.yaml
-```
 
 # Citation
 ```bibtex
