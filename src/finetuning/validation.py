@@ -45,15 +45,10 @@ import argparse
 roi = 96
 itera= 399
 parser = argparse.ArgumentParser(description="PyTorch Training")
-parser.add_argument("--date", default='08.16_', type=str, help="Training date")
 parser.add_argument("--img_size", default=(roi,roi,roi), type=tuple, help="number of training epochs")
-parser.add_argument("--mask_ratio", default=0.6, type=float, help="Training date")
 parser.add_argument("--weight_name", default='90_swin_', type=str, help="SSL weight name")
-parser.add_argument("--epochs", default=1600, type=int, help="number of training epochs")
-parser.add_argument("--num_steps", default=1600*itera, type=int, help="number of training iterations")
-parser.add_argument("--batch_size", default=4, type=int, help="number of batch size")
 parser.add_argument("--eval_num", default=itera, type=int, help="evaluation frequency")
-
+parser.add_argument("--data_path", type=bool, help="data_path")
 parser.add_argument("--qkv_bias", default=False, type=bool, help="warmup steps")
 parser.add_argument("--save_attn", default=False, type=bool, help="warmup steps")
 
@@ -151,7 +146,7 @@ val_transforms = Compose(
 if __name__ == "__main__":
 
     set_track_meta(True)
-    datasets = r"/home/work/.medsam/dataset/BTCV/dataset_0.json"
+    datasets = args.data_path
     val_list = load_decathlon_datalist(datasets, True, "validation")
     val_ds = CacheDataset(data=val_list, transform=val_transforms, cache_num=len(val_list), cache_rate=1.0, num_workers=0)
     val_loader = ThreadDataLoader(val_ds, num_workers=0, batch_size=1)
