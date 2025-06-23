@@ -166,7 +166,7 @@ Comming Soon
 # Citation
 ```bibtex
 @article{subfore,
-  title={Subvolume-based Foreground Masking for Medical Masked Image Modeling},
+  title={Efficient Foreground Masking for Medical Masked Image Modeling},
   author={},
   journal={},
   year={2025}
