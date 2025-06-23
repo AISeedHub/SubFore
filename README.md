@@ -1,11 +1,10 @@
-# SubFore: Subvolume Foreground Masking for Medical Image Modeling
-Offical implementation of paper [Subvolume-based Foreground Masking for Medical Masked Image Modeling]()
+# Efficient Foreground Masking for 3D Medical Masked Image Modeling
+Offical implementation of paper [Efficient Foreground Masking for 3D Medical Masked Image Modeling]()
 
 ![alt text](assets/framework.jpg "Framework")
 
 ## Contributions
-We focus on improving the pre-text task by exploring two-step
-masking strategy: 
+We focus on improving the pre-text task by foreground masking: 
 
 - (1) Subvolume partition, which leverages 3D subvolumes to incorporate richer spatial context than standard full volume patchified methods.
 - (2) Foreground Masking, which considers the semantic distribution of anatomy, aiming to exclude background air regions that lack meaningful features.
